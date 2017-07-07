@@ -5,12 +5,12 @@ import java.util.List;
 
 public class App {
 	public static void main(String[] args) {
-		Tetronimo l = TetronimoFactory.newTetronimo(Tetronimo.Type.I);
+		Tetromino l = TetrominoFactory.newTetromino(Tetromino.Type.I);
 		System.out.println(l);
 	}
 }
 
-class Tetronimo {
+class Tetromino {
 	public enum Type {
 		J,
 		L,
@@ -24,7 +24,7 @@ class Tetronimo {
 	private Type type;
 	private Grid grid;
 	
-	public Tetronimo(Type type, Grid grid) {
+	public Tetromino(Type type, Grid grid) {
 		this.type = type;
 		this.grid = grid;
 	}
@@ -73,9 +73,9 @@ class Tetronimo {
 	}
 }
 
-class TetronimoFactory {
-	private TetronimoFactory() {}
-	public static Tetronimo newTetronimo(Tetronimo.Type type) {
+class TetrominoFactory {
+	private TetrominoFactory() {}
+	public static Tetromino newTetromino(Tetromino.Type type) {
 		Grid grid = Grid.newGrid();
 		List<Coord> coord = null;
 		switch(type) {
@@ -87,7 +87,7 @@ class TetronimoFactory {
 			Coord cd = coord.get(i);
 			grid.setCell(cd, true);
 		}
-		return new Tetronimo(type, grid);
+		return new Tetromino(type, grid);
 	}
 }
 
