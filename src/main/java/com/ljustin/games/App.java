@@ -1,12 +1,55 @@
-package com.ljustin.poc.tetris;
+package com.ljustin.games;
 
-import java.util.Arrays;
-import java.util.List;
 
 public class App {
+	public static final int GRID_SIZE = 4;
 	public static void main(String[] args) {
 		Tetromino l = TetrominoFactory.newTetromino(Tetromino.Type.I);
 		System.out.println(l);
+		l.rotate();
+		System.out.println(l);
+		l.rotate();
+		System.out.println(l);
+		l.rotate();
+		System.out.println(l);
+		Tetromino s = TetrominoFactory.newTetromino(Tetromino.Type.S);
+		System.out.println(s);
+		s.rotate();
+		System.out.println(s);
+		s.rotate();
+		System.out.println(s);
+		s.rotate();
+		System.out.println(s);
+		Tetromino o = TetrominoFactory.newTetromino(Tetromino.Type.O);
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
+		o = TetrominoFactory.newTetromino(Tetromino.Type.J);
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
+		o = TetrominoFactory.newTetromino(Tetromino.Type.L);
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
+		o = TetrominoFactory.newTetromino(Tetromino.Type.T);
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
+		o = TetrominoFactory.newTetromino(Tetromino.Type.Z);
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
+		o.rotate();
+		System.out.println(o);
 	}
 }
 
@@ -20,13 +63,18 @@ class Tetromino {
 		O,
 		I;
 	}
-	
 	private Type type;
-	private Grid grid;
+	private Point[] points;
+	private Point origin;
 	
-	public Tetromino(Type type, Grid grid) {
+	public Tetromino(Type type, Point[] points) {
 		this.type = type;
-		this.grid = grid;
+		this.points = points;
+		for (Point point:points) {
+			if (point.origin) {
+				this.origin = point;
+			}
+		}
 	}
 
 	public Type getType() {
@@ -37,34 +85,77 @@ class Tetromino {
 		this.type = type;
 	}
 
-	public Grid getGrid() {
-		return grid;
+	public Point[] getPoints() {
+		return points;
 	}
 
-	public void setGrid(Grid grid) {
-		this.grid = grid;
+	public void setPoints(Point[] points) {
+		this.points = points;
 	}
 	
 	public void rotate() {
-		/*
-		 *  xNew = -y
-		 *	yNew = x
-		 */
+		for (Point point:points) {
+			/*
+			 *  | | | | |
+			 *	|x|o|x|x|
+			 *	| | | | |
+			 *	| | | | |
+			 *  (0,1)
+			 *  (1,1)
+			 *  (0,1) -> (-1,0) -> (-1,0) -> (0,1) -> (0,-1) -> (1, 0)
+			 *  (3,1) -> (2,0) -> (2,0) -> (0, 2) -> (0,-2) -> (1, -1)
+			 *  											-> (1, 3)
+			 */
+			if (!point.origin && this.type != Type.O) {
+				// translate point wrt new origin
+				point.x -= this.origin.x;
+				point.y -= this.origin.y;
+				// as y increase downward for (0,0) origin
+				point.y = -point.y;
+				
+		        // May need to round results after rotation
+		        int x3 = (int)Math.round(point.x * Math.cos(Math.PI/2) - point.y * Math.sin(Math.PI/2)); 
+		        int y3 = (int)Math.round(point.x * Math.sin(Math.PI/2) + point.y * Math.cos(Math.PI/2));
+
+		        if (this.type != Type.I)
+		        	y3 = -y3;	
+		        /*
+				int temp = point.x;
+				int x2 = -point.y;
+				int y2 = temp;
+				
+				y2 = -y2;
+				*/
+				x3 += this.origin.x;
+				y3 += this.origin.y;
+				
+				point.x = x3;
+				point.y = y3;
+			}
+		}
+
+		
+		
 	}
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		Grid grid = this.getGrid();
-		boolean[][] cells = grid.getCells();
-		for (int i=0; i<Grid.SIZE;i++) {
-			for (int j=0; j<Grid.SIZE; j++) {
-				if (j<=(Grid.SIZE-1)) {
+
+		for (int i=0; i<App.GRID_SIZE;i++) {
+			for (int j=0; j<App.GRID_SIZE; j++) {
+				if (j<=(App.GRID_SIZE-1)) {
 					sb.append(j==0 ? "|": "");
-					sb.append(cells[j][i] ? "x" : " ");
+					int pointOnGridIdx=-1;
+					for (int k=0;k<points.length;k++) {
+						if (points[k].x==j && points[k].y==i) {
+							pointOnGridIdx = k;
+						}
+					}
+					sb.append(pointOnGridIdx != -1 ? points[pointOnGridIdx].origin ? "o" : "x" : " ");
 					sb.append("|");
 				} 
 				
-				if (j==Grid.SIZE-1)
+				if (j==App.GRID_SIZE-1)
 					sb.append("\n");
 				
 			}
@@ -76,44 +167,45 @@ class Tetromino {
 class TetrominoFactory {
 	private TetrominoFactory() {}
 	public static Tetromino newTetromino(Tetromino.Type type) {
-		Grid grid = Grid.newGrid();
-		List<Coord> coord = null;
+		Point[] points = null;
 		switch(type) {
 			case I:
-				coord = Arrays.asList(new Coord(0,1), new Coord(1,1), new Coord(2,1), new Coord(3,1));
+				points = new Point[]{ new Point(0,1), new Point(1,1,true), new Point(2,1), new Point(3,1)};
+				break;
+			case S:
+				points = new Point[]{ new Point(1,0), new Point(1,1,true), new Point(2,0), new Point(0,1)};
+				break;
+			case O:
+				points = new Point[]{ new Point(1,0), new Point(2,0), new Point(1,1), new Point(2,1)};
+				break;
+			case L:
+				points = new Point[]{ new Point(0,0), new Point(0,1), new Point(1,1,true), new Point(2,1)};
+				break;
+			case J:
+				points = new Point[]{ new Point(2,0), new Point(0,1), new Point(1,1,true), new Point(2,1)};
+				break;
+			case T:
+				points = new Point[]{ new Point(1,0), new Point(0,1), new Point(1,1,true), new Point(2,1)};
+				break;
+			case Z:
+				points = new Point[]{ new Point(0,0), new Point(1,0), new Point(1,1,true), new Point(2,1)};
 				break;
 		}
-		for (int i=0;i<coord.size();i++) {
-			Coord cd = coord.get(i);
-			grid.setCell(cd, true);
-		}
-		return new Tetromino(type, grid);
+
+		return new Tetromino(type, points);
 	}
 }
 
-class Grid {
-	static final int SIZE = 4; // 4 x 4 grid
-	private boolean[][] cells;
-	private Grid() {}
-	public static Grid newGrid() {
-		Grid grid = new Grid();
-		grid.cells =  new boolean[SIZE][SIZE];
-		return grid;
-	}
-	public void setCell(Coord coord, boolean value) {
-		cells[coord.x][coord.y] = value;
-	}
-	// todo: iterator
-	public boolean[][] getCells() {
-		return this.cells;
-	}
-}
-
-class Coord {
+class Point {
 	int x,y;
-	public Coord(int x, int y) {
+	boolean origin;
+	public Point(int x, int y) {
+		this(x, y, false);
+	}
+	public Point(int x, int y, boolean origin) {
 		this.x = x;
 		this.y = y;
+		this.origin = origin;
 	}
 }
 
